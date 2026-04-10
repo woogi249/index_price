@@ -2,8 +2,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { ADLTicker, ADLSnapshot } from "@/lib/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_ADL_API_URL || "http://localhost:8001";
-const WS_TOKEN = process.env.NEXT_PUBLIC_ADL_WS_TOKEN || "";
+const API_BASE = (process.env.NEXT_PUBLIC_ADL_API_URL || "http://localhost:8001").trim();
+const WS_TOKEN = (process.env.NEXT_PUBLIC_ADL_WS_TOKEN || "").trim();
 const WS_URL = (() => {
   const base = API_BASE.replace(/^https:/, "wss:").replace(/^http:/, "ws:");
   const tokenParam = WS_TOKEN ? `?token=${WS_TOKEN}` : "";
