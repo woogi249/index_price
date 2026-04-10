@@ -59,8 +59,11 @@ export function ADLDetailPanel({ ticker }: { ticker: ADLTicker }) {
     return Array.from(map.values()).sort((a, b) => a.time - b.time);
   })();
 
+  const lastPrice = ticker.last_price;
   const markPrice = ticker.mark_price;
   const indexPrice = ticker.index_price;
+  const markDiffPct = lastPrice > 0 ? ((markPrice - lastPrice) / lastPrice * 100) : 0;
+  const indexDiffPct = lastPrice > 0 ? ((indexPrice - lastPrice) / lastPrice * 100) : 0;
 
   return (
     <div className="flex gap-4 p-4 bg-void/50 border-t border-border/30">
@@ -71,15 +74,21 @@ export function ADLDetailPanel({ ticker }: { ticker: ADLTicker }) {
           <div className="flex items-center gap-3 text-[10px]">
             <span className="flex items-center gap-1">
               <span className="w-3 h-0.5 bg-white inline-block rounded" />
-              Last
+              Last {formatPrice(lastPrice)}
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-0.5 bg-accent inline-block rounded" />
               Mark {formatPrice(markPrice)}
+              <span className={markDiffPct >= 0 ? "text-safe" : "text-danger"}>
+                ({markDiffPct >= 0 ? "+" : ""}{markDiffPct.toFixed(3)}%)
+              </span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-0.5 bg-purple-400 inline-block rounded" />
               Index {formatPrice(indexPrice)}
+              <span className={indexDiffPct >= 0 ? "text-safe" : "text-danger"}>
+                ({indexDiffPct >= 0 ? "+" : ""}{indexDiffPct.toFixed(3)}%)
+              </span>
             </span>
           </div>
         </div>
