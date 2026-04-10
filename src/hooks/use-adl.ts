@@ -39,6 +39,7 @@ export function useAdl() {
           const snap: ADLSnapshot = await res.json();
           if (mounted && snap.tickers.length > 0) {
             mergeTickers(snap.tickers);
+            setStatus("connected");
           }
         }
       } catch {
