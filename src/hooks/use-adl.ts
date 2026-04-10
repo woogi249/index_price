@@ -86,9 +86,13 @@ export function useAdl() {
     connect();
     fetchSnapshot();
 
+    // Re-fetch snapshot every 30s as fallback
+    const pollInterval = setInterval(fetchSnapshot, 30000);
+
     return () => {
       mounted = false;
       clearTimeout(reconnectTimer.current);
+      clearInterval(pollInterval);
       wsRef.current?.close();
       wsRef.current = null;
     };

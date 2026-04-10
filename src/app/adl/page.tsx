@@ -58,10 +58,9 @@ export default function ADLPage() {
   const [minScore, setMinScore] = useState(2);
 
   const items = useMemo(() => {
-    const now = Date.now() / 1000;
-    // remove stale tickers (2+ min) and dated futures/options (e.g. BTCUSDT-250411)
+    // remove dated futures/options (e.g. BTCUSDT-250411)
     let list = Array.from(tickers.values()).filter(
-      (t) => now - t.timestamp < 120 && !t.symbol.includes("-")
+      (t) => !t.symbol.includes("-")
     );
 
     // filter
