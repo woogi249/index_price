@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useAdl } from "@/hooks/use-adl";
+import { ADLDetailPanel } from "@/components/charts/adl-detail-panel";
 import Link from "next/link";
 import type { ADLTicker } from "@/lib/types";
 
@@ -56,6 +57,7 @@ export default function ADLPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [filter, setFilter] = useState<Filter>("candidate");
   const [minScore, setMinScore] = useState(2);
+  const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
 
   const items = useMemo(() => {
     // remove dated futures/options (e.g. BTCUSDT-250411)
@@ -246,7 +248,12 @@ export default function ADLPage() {
           </thead>
           <tbody>
             {items.map((t) => (
-              <TickerRow key={t.symbol} ticker={t} />
+              <TickerRow
+                key={t.symbol}
+                ticker={t}
+                expanded={expandedSymbol === t.symbol}
+                onToggle={() => setExpandedSymbol(expandedSymbol === t.symbol ? null : t.symbol)}
+              />
             ))}
           </tbody>
         </table>
@@ -275,9 +282,10 @@ export default function ADLPage() {
 
 /* ── sub-components ──────────────────────────────────── */
 
-function TickerRow({ ticker: t }: { ticker: ADLTicker }) {
+function TickerRow({ ticker: t, expanded, onToggle }: { ticker: ADLTicker; expanded: boolean; onToggle: () => void }) {
   return (
-    <tr className="border-b border-border/50 hover:bg-surface-hover transition-colors">
+    <>
+    <tr className="border-b border-border/50 hover:bg-surface-hover transition-colors cursor-pointer" onClick={onToggle}>
       {/* Symbol */}
       <td className="px-4 py-2.5">
         <div className="flex items-center gap-2">
@@ -364,6 +372,14 @@ function TickerRow({ ticker: t }: { ticker: ADLTicker }) {
         {timeAgo(t.timestamp)}
       </td>
     </tr>
+    {expanded && (
+      <tr>
+        <td colSpan={10} className="p-0">
+          <ADLDetailPanel ticker={t} />
+        </td>
+      </tr>
+    )}
+    </>
   );
 }
 
