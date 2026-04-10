@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useAdl } from "@/hooks/use-adl";
 import { ADLDetailPanel } from "@/components/charts/adl-detail-panel";
 import Link from "next/link";
@@ -58,6 +58,8 @@ export default function ADLPage() {
   const [filter, setFilter] = useState<Filter>("candidate");
   const [minScore, setMinScore] = useState(2);
   const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
+  const frozenOrderRef = useRef<string[] | null>(null);
+  const latestItemsRef = useRef<ADLTicker[]>([]);
 
   const items = useMemo(() => {
     // remove dated futures/options (e.g. BTCUSDT-250411)
@@ -77,7 +79,22 @@ export default function ADLPage() {
       list = list.filter((t) => t.symbol.includes(q));
     }
 
-    // sort
+    // If a row is expanded, keep the frozen order but update data
+    if (frozenOrderRef.current) {
+      const dataMap = new Map(list.map((t) => [t.symbol, t]));
+      const frozen: ADLTicker[] = [];
+      for (const sym of frozenOrderRef.current) {
+        const t = dataMap.get(sym);
+        if (t) frozen.push(t);
+      }
+      // Add any new symbols that appeared after freeze
+      for (const t of list) {
+        if (!frozenOrderRef.current.includes(t.symbol)) frozen.push(t);
+      }
+      return frozen;
+    }
+
+    // sort (only when no row is expanded)
     list.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
@@ -111,6 +128,19 @@ export default function ADLPage() {
 
     return list;
   }, [tickers, query, sortKey, sortDir, filter, minScore]);
+
+  // Keep a ref to latest items for freezing
+  latestItemsRef.current = items;
+
+  const handleToggle = (symbol: string) => {
+    if (expandedSymbol === symbol) {
+      setExpandedSymbol(null);
+      frozenOrderRef.current = null;
+    } else {
+      setExpandedSymbol(symbol);
+      frozenOrderRef.current = latestItemsRef.current.map((t) => t.symbol);
+    }
+  };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -252,7 +282,7 @@ export default function ADLPage() {
                 key={t.symbol}
                 ticker={t}
                 expanded={expandedSymbol === t.symbol}
-                onToggle={() => setExpandedSymbol(expandedSymbol === t.symbol ? null : t.symbol)}
+                onToggle={() => handleToggle(t.symbol)}
               />
             ))}
           </tbody>
