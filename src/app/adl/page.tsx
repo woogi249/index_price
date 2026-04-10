@@ -62,6 +62,20 @@ export default function ADLPage() {
   const latestItemsRef = useRef<ADLTicker[]>([]);
 
   const items = useMemo(() => {
+    // If a row is expanded, freeze the entire list (order + membership)
+    // Only update the data values for existing symbols
+    if (frozenOrderRef.current) {
+      const allData = new Map(
+        Array.from(tickers.values()).map((t) => [t.symbol, t])
+      );
+      const frozen: ADLTicker[] = [];
+      for (const sym of frozenOrderRef.current) {
+        const t = allData.get(sym);
+        if (t) frozen.push(t);
+      }
+      return frozen;
+    }
+
     // remove dated futures/options (e.g. BTCUSDT-250411)
     let list = Array.from(tickers.values()).filter(
       (t) => !t.symbol.includes("-")
@@ -77,21 +91,6 @@ export default function ADLPage() {
     if (query) {
       const q = query.toUpperCase();
       list = list.filter((t) => t.symbol.includes(q));
-    }
-
-    // If a row is expanded, keep the frozen order but update data
-    if (frozenOrderRef.current) {
-      const dataMap = new Map(list.map((t) => [t.symbol, t]));
-      const frozen: ADLTicker[] = [];
-      for (const sym of frozenOrderRef.current) {
-        const t = dataMap.get(sym);
-        if (t) frozen.push(t);
-      }
-      // Add any new symbols that appeared after freeze
-      for (const t of list) {
-        if (!frozenOrderRef.current.includes(t.symbol)) frozen.push(t);
-      }
-      return frozen;
     }
 
     // sort (only when no row is expanded)
