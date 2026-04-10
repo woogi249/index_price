@@ -16,7 +16,7 @@ export function useAdl() {
   const [tickers, setTickers] = useState<Map<string, ADLTicker>>(new Map());
   const [status, setStatus] = useState<"connecting" | "connected" | "error">("connecting");
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const mergeTickers = useCallback((incoming: ADLTicker[]) => {
     setTickers((prev) => {
