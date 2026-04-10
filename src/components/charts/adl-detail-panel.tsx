@@ -38,15 +38,27 @@ export function ADLDetailPanel({ ticker }: { ticker: ADLTicker }) {
   const { data: kline, loading } = useBybitKline(ticker.symbol);
   const depth = useBybitDepth(ticker.symbol);
 
-  // Build chart data: kline close as "last", mark/index from current ticker
-  const chartData = kline.map((k) => ({
-    time: k.timestamp,
-    close: k.close,
-    high: k.high,
-    low: k.low,
-  }));
+  // Merge last/mark/index klines by timestamp
+  const chartData = (() => {
+    const map = new Map<number, { time: number; last?: number; mark?: number; index?: number }>();
+    for (const k of kline.last) {
+      const entry = map.get(k.timestamp) || { time: k.timestamp };
+      entry.last = k.close;
+      map.set(k.timestamp, entry);
+    }
+    for (const k of kline.mark) {
+      const entry = map.get(k.timestamp) || { time: k.timestamp };
+      entry.mark = k.close;
+      map.set(k.timestamp, entry);
+    }
+    for (const k of kline.index) {
+      const entry = map.get(k.timestamp) || { time: k.timestamp };
+      entry.index = k.close;
+      map.set(k.timestamp, entry);
+    }
+    return Array.from(map.values()).sort((a, b) => a.time - b.time);
+  })();
 
-  // Add current mark/index as reference lines via the latest data point
   const markPrice = ticker.mark_price;
   const indexPrice = ticker.index_price;
 
@@ -72,7 +84,7 @@ export function ADLDetailPanel({ ticker }: { ticker: ADLTicker }) {
           </div>
         </div>
 
-        {loading && chartData.length === 0 ? (
+        {loading && kline.last.length === 0 ? (
           <div className="h-[160px] flex items-center justify-center text-muted text-xs">
             Loading chart...
           </div>
@@ -105,34 +117,32 @@ export function ADLDetailPanel({ ticker }: { ticker: ADLTicker }) {
                 labelFormatter={(v) => formatTime(Number(v))}
                 formatter={(v) => [formatPrice(Number(v)), ""]}
               />
-              {/* Close price line */}
               <Line
                 type="monotone"
-                dataKey="close"
+                dataKey="last"
                 stroke="#e5e7eb"
                 strokeWidth={1.5}
                 dot={false}
                 name="Last"
+                connectNulls
               />
-              {/* Mark price reference line */}
               <Line
                 type="monotone"
-                dataKey={() => markPrice}
+                dataKey="mark"
                 stroke="#06b6d4"
-                strokeWidth={1}
-                strokeDasharray="4 2"
+                strokeWidth={1.2}
                 dot={false}
                 name="Mark"
+                connectNulls
               />
-              {/* Index price reference line */}
               <Line
                 type="monotone"
-                dataKey={() => indexPrice}
+                dataKey="index"
                 stroke="#a78bfa"
-                strokeWidth={1}
-                strokeDasharray="4 2"
+                strokeWidth={1.2}
                 dot={false}
                 name="Index"
+                connectNulls
               />
             </LineChart>
           </ResponsiveContainer>
